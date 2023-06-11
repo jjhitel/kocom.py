@@ -1,6 +1,6 @@
 {
     "name": "Kocom Wallpad with RS485",
-    "version": "2023.06.11-15",
+    "version": "2023.06.11-16",
     "slug": "kocom_py",
     "description": "Kocom Wallpad for Home Assistant",
     "arch": [
@@ -31,11 +31,7 @@
             "mqtt_password": "pw"
         },
         "Device":    {
-            "enabled": "light_livingroom_light1, light_livingroom_light2, light_livingroom_light3, light_bedroom_light1, light_room1_light1, light_room2_light1, light_kitchen_light1, light_kitchen_light1, light_kitchen_light2, gas, thermo_livingroom, thermo_bedroom, thermo_room1, thermo_room2, plug_livingroom_plug1, plug_livingroom_plug2, plug_bedroom_plug1, plug_bedroom_plug2, plug_room1_plug1, plug_room1_plug2, plug_room2_plug1, plug_room2_plug2, elevator, fan"
-        },
-        "Elevator": {
-            "type": "rs485",
-            "rs485_floor": 15
+            "enabled": "light_livingroom_light1, light_livingroom_light2, light_livingroom_light3, light_bedroom_light1, light_room1_light1, light_room2_light1, light_kitchen_light1, light_kitchen_light1, light_kitchen_light2"
         },
         "Log": {
             "show_query_hex": true,
@@ -44,10 +40,7 @@
             "show_mqtt_publish": true
         },
         "User": {
-            "init_temp": 23,
-            "init_fan_mode": "Medium",
-            "light_count": 3,
-            "plug_count": 2
+            "light_count": 3
         }
     },
     "schema": {
@@ -67,10 +60,6 @@
         "Device": {
             "enabled": "str"
         },
-        "Elevator": {
-            "type": "list(rs485|tcpip)",
-            "rs485_floor": "int?"
-        },
         "Log": {
             "show_query_hex": "bool?",
             "show_recv_hex": "bool?",
@@ -78,8 +67,6 @@
             "show_mqtt_publish": "bool?"
         },
         "User": {
-            "init_temp": "int(10,30)",
-            "init_fan_mode" : "list(Low|Medium|High)",
             "light_count" : "int"
         }
     }
