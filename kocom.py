@@ -11,6 +11,7 @@
  python3 -m pip install paho-mqtt
 '''
 import os
+import os.path
 import time
 import platform
 import threading
@@ -25,6 +26,7 @@ import configparser
 # define -------------------------------
 SW_VERSION = '2023.06.11'
 CONFIG_FILE = 'kocom.conf'
+CONFIG_LOGFILE = 'kocom.log'
 BUF_SIZE = 100
 
 read_write_gap = 0.03  # minimal time interval between last read to write
@@ -46,6 +48,16 @@ seq_h_dic = {v: k for k, v in seq_t_dic.items()}
 device_h_dic = {v: k for k, v in device_t_dic.items()}
 cmd_h_dic = {v: k for k, v in cmd_t_dic.items()}
 room_h_dic = {'livingroom':'00', 'myhome':'00', 'bedroom':'01', 'room1':'02', 'room2':'03', 'kitchen':'04'}
+
+# Log 폴더 생성 (도커 실행 시 로그폴더 매핑)
+def make_folder(folder_name):
+    if not os.path.isdir(folder_name):
+        os.mkdir(folder_name)
+root_dir = str(os.path.dirname(os.path.realpath(__file__)))
+log_dir = root_dir + '/log/'
+make_folder(log_dir)
+conf_path = str(root_dir + '/'+ CONFIG_FILE)
+log_path = str(log_dir + '/' + CONFIG_LOGFILE)
 
 # mqtt functions ----------------------------
 
