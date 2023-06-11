@@ -33,8 +33,7 @@
     "Device":  [
       "enabled": "light, fan, thermo_livingroom, thermo_bedroom, thermo_room1, thermo_room2, elevator"
     },
-  "Elevator": {
-    "RS485": {
+    "Elevator": {
       "type": "rs485"
       "rs485_floor": 15
     },
