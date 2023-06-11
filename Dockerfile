@@ -1,4 +1,4 @@
-FROM python:3.7.3
+FROM python:3
 
 ENV LANG C.UTF-8
 
@@ -6,7 +6,7 @@ ENV LANG C.UTF-8
 COPY run.sh makeconf.sh kocom.py /
 
 # Install requirements for add-on
-RUN python3 -m pip install jq
+RUN apt-get update && apt-get -y install jq
 RUN python3 -m pip install pyserial
 RUN python3 -m pip install paho-mqtt
 
