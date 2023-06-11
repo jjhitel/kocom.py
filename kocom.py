@@ -301,7 +301,7 @@ def light_parse(value):
 def plug_parse(value):
     ret = {}
     for i in range(1, int(config.get('User', 'plug_count'))+1):
-        switch['plug'+str(i)] = 'off' if value[i*2-2:i*2] == '00' else 'on'
+        ret['plug_'+str(i)] = 'off' if value[i*2-2:i*2] == '00' else 'on'
     return ret
 
 
@@ -697,9 +697,9 @@ def publish_discovery(dev, sub=''):
             topic = 'homeassistant/switch/kocom_{}_plug{}/config'.format(sub, num)
             payload = {
                 'name': 'Kocom {} Plug{}'.format(sub, num),
-                'cmd_t': 'kocom/{}/plug/{}/command'.format(sub, num),
+                'cmd_t': 'kocom/{}/plug/{}/set'.format(sub, num),
                 'stat_t': 'kocom/{}/plug/state'.format(sub),
-                'stat_val_tpl': '{{ value_json.plug_' + str(num) + ' }}',
+                'stat_val_tpl': '{{ value_json.plug' + str(num) + ' }}',
                 'pl_on': 'on',
                 'pl_off': 'off',
                 'qos': 0,
