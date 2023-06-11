@@ -1,6 +1,6 @@
 {
     "name": "Kocom Wallpad with RS485",
-    "version": "2023.06.11-4",
+    "version": "2023.06.11-5",
     "slug": "kocom_py",
     "description": "Kocom Wallpad for Home Assistant",
     "arch": [
@@ -40,6 +40,7 @@
         "Log": {
             "show_query_hex": true,
             "show_recv_hex": true,
+            "show_mqtt_discovery": true,
             "show_mqtt_publish": true
         },
         "User": {
@@ -72,6 +73,7 @@
         "Log": {
             "show_query_hex": "bool?",
             "show_recv_hex": "bool?",
+            "show_mqtt_discovery": "bool?",
             "show_mqtt_publish": "bool?"
         },
         "User": {
