@@ -79,4 +79,5 @@
       "init_fan_mode" : "list(Low|Medium|High)",
       "light_count" : "int"
     }
+  }
 }
