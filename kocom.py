@@ -301,7 +301,7 @@ def light_parse(value):
 def plug_parse(value):
     ret = {}
     for i in range(1, int(config.get('User', 'plug_count'))+1):
-        ret['plug_'+str('0')] = 'on' if value[i*2-2:i*2] > 0 else 'off'
+        switch['plug'+str(i)] = 'off' if value[i*2-2:i*2] == '00' else 'on'
     return ret
 
 
