@@ -11,7 +11,6 @@
  python3 -m pip install paho-mqtt
 '''
 import os
-import os.path
 import time
 import platform
 import threading
@@ -26,7 +25,6 @@ import configparser
 # define -------------------------------
 SW_VERSION = '2023.06.11'
 CONFIG_FILE = 'kocom.conf'
-CONFIG_LOGFILE = 'kocom.log'
 BUF_SIZE = 100
 
 read_write_gap = 0.03  # minimal time interval between last read to write
@@ -48,16 +46,6 @@ seq_h_dic = {v: k for k, v in seq_t_dic.items()}
 device_h_dic = {v: k for k, v in device_t_dic.items()}
 cmd_h_dic = {v: k for k, v in cmd_t_dic.items()}
 room_h_dic = {'livingroom':'00', 'myhome':'00', 'bedroom':'01', 'room1':'02', 'room2':'03', 'kitchen':'04'}
-
-# Log 폴더 생성 (도커 실행 시 로그폴더 매핑)
-def make_folder(folder_name):
-    if not os.path.isdir(folder_name):
-        os.mkdir(folder_name)
-root_dir = str(os.path.dirname(os.path.realpath(__file__)))
-log_dir = root_dir + '/log/'
-make_folder(log_dir)
-conf_path = str(root_dir + '/'+ CONFIG_FILE)
-log_path = str(log_dir + '/' + CONFIG_LOGFILE)
 
 # mqtt functions ----------------------------
 
@@ -310,6 +298,12 @@ def light_parse(value):
     return ret
 
 
+def plug_parse(value):
+    ret = {}
+    for i in range(1, int(config.get('User', 'plug_count'))+1):
+        ret['plug_'+str(i)] = 'off' if value[i*2-2:i*2] == '00' else 'on'
+    return ret
+
 def fan_parse(value):
     preset_dic = {'40':'Low', '80':'Medium', 'c0':'High'}
     state = 'off' if value[:2] == '10' else 'on'
@@ -454,6 +448,23 @@ def mqtt_on_message(mqttc, obj, msg):
         else:
             send_wait_response(dest=dev_id, value=value, log='light')
 
+    # plug on/off : kocom/livingroom/plug/1/command
+    elif 'plug' in topic_d:
+        dev_id = device_h_dic['plug'] + room_h_dic.get(topic_d[1])
+        value = query(dev_id)['value']
+        onoff_hex = 'ff' if command == 'on' else '00'
+        plug_id = int(topic_d[3])
+
+        # turn on/off multiple plugs at once : e.g) kocom/livingroom/plug/12/command
+        if plug_id > 0:
+            while plug_id > 0:
+                n = plug_id % 10
+                value = value[:n*2-2] + onoff_hex + value[n*2:]
+                send_wait_response(dest=dev_id, value=value, log='plug')
+                plug_id = int(plug_id/10)
+        else:
+            send_wait_response(dest=dev_id, value=value, log='plug')
+
     # gas off : kocom/livingroom/gas/command
     elif 'gas' in topic_d:
         dev_id = device_h_dic['gas'] + room_h_dic.get(topic_d[1])
@@ -534,6 +545,10 @@ def packet_processor(p):
             state = light_parse(p['value'])
             logtxt='[MQTT publish|light] room[{}] data[{}]'.format(p['src_room'], state)
             mqttc.publish("kocom/{}/light/state".format(p['src_room']), json.dumps(state))
+        elif p['src'] == 'plug' and p['cmd'] == 'state':
+            state = light_parse(p['value'])
+            logtxt='[MQTT publish|plug] room[{}] data[{}]'.format(p['src_room'], state)
+            mqttc.publish("kocom/{}/plug/state".format(p['src_room']), json.dumps(state))
         elif p['src'] == 'fan' and p['cmd'] == 'state':
             state = fan_parse(p['value'])
             logtxt='[MQTT publish|fan] data[{}]'.format(state)
@@ -659,6 +674,31 @@ def publish_discovery(dev, sub=''):
                 'cmd_t': 'kocom/{}/light/{}/command'.format(sub, num),
                 'stat_t': 'kocom/{}/light/state'.format(sub),
                 'stat_val_tpl': '{{ value_json.light_' + str(num) + ' }}',
+                'pl_on': 'on',
+                'pl_off': 'off',
+                'qos': 0,
+                'uniq_id': '{}_{}_{}{}'.format('kocom', 'wallpad', dev, num),
+                'device': {
+                    'name': '코콤 스마트 월패드',
+                    'ids': 'kocom_smart_wallpad',
+                    'mf': 'KOCOM',
+                    'mdl': '스마트 월패드',
+                    'sw': SW_VERSION
+                }
+            }
+            logtxt='[MQTT Discovery|{}{}] data[{}]'.format(dev, num, topic)
+            mqttc.publish(topic, json.dumps(payload))
+            if logtxt != "" and config.get('Log', 'show_mqtt_publish') == 'True':
+                logging.info(logtxt)
+    elif dev == 'plug':
+        for num in range(1, int(config.get('User', 'plug_count'))+1):
+            #ha_topic = 'homeassistant/plug/kocom_livingroom_plug1/config'
+            topic = 'homeassistant/plug/kocom_{}_plug{}/config'.format(sub, num)
+            payload = {
+                'name': 'Kocom {} Plug{}'.format(sub, num),
+                'cmd_t': 'kocom/{}/plug/{}/command'.format(sub, num),
+                'stat_t': 'kocom/{}/plug/state'.format(sub),
+                'stat_val_tpl': '{{ value_json.plug_' + str(num) + ' }}',
                 'pl_on': 'on',
                 'pl_off': 'off',
                 'qos': 0,
