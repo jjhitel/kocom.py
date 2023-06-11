@@ -1,6 +1,6 @@
 {
     "name": "Kocom Wallpad with RS485",
-    "version": "2023.06.11-8",
+    "version": "2023.06.11-9",
     "slug": "kocom_py",
     "description": "Kocom Wallpad for Home Assistant",
     "arch": [
@@ -31,7 +31,7 @@
             "mqtt_password": "pw"
         },
         "Device":    {
-            "enabled": "light, gas, thermo_livingroom, thermo_bedroom, thermo_room1, thermo_room2, plug, elevator, fan"
+            "enabled": "light_livingroom_light1, light_livingroom_light2, light_livingroom_light3, light_bedroom_light1, light_room1_light1, light_room2_light1, light_kitchen_light1, light_kitchen_light1, light_kitchen_light2, gas, thermo_livingroom, thermo_bedroom, thermo_room1, thermo_room2, plug_livingroom_plug1, plug_livingroom_plug2, plug_bedroom_plug1, plug_bedroom_plug2, plug_room1_plug1, plug_room1_plug2, plug_room2_plug1, plug_room2_plug2, elevator, fan"
         },
         "Elevator": {
             "type": "rs485",
