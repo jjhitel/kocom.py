@@ -1,6 +1,6 @@
 {
     "name": "Kocom Wallpad with RS485",
-    "version": "2023.06.11-10",
+    "version": "2023.06.11-11",
     "slug": "kocom_py",
     "description": "Kocom Wallpad for Home Assistant",
     "arch": [
@@ -46,7 +46,8 @@
         "User": {
             "init_temp": 23,
             "init_fan_mode": "Medium",
-            "light_count": 2
+            "light_count": 3,
+            "plug_count": 2
         }
     },
     "schema": {
