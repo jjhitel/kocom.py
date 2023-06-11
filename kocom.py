@@ -304,6 +304,7 @@ def plug_parse(value):
         ret['plug_'+str(i)] = 'off' if value[i*2-2:i*2] == '00' else 'on'
     return ret
 
+
 def fan_parse(value):
     preset_dic = {'40':'Low', '80':'Medium', 'c0':'High'}
     state = 'off' if value[:2] == '10' else 'on'
@@ -693,7 +694,7 @@ def publish_discovery(dev, sub=''):
     elif dev == 'plug':
         for num in range(1, int(config.get('User', 'plug_count'))+1):
             #ha_topic = 'homeassistant/plug/kocom_livingroom_plug1/config'
-            topic = 'homeassistant/plug/kocom_{}_plug{}/config'.format(sub, num)
+            topic = 'homeassistant/switch/kocom_{}_plug{}/config'.format(sub, num)
             payload = {
                 'name': 'Kocom {} Plug{}'.format(sub, num),
                 'cmd_t': 'kocom/{}/plug/{}/command'.format(sub, num),
