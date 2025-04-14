@@ -581,7 +581,7 @@ def publish_discovery(dev, sub=''):
             'unique_id': '{}_{}_{}_{}'.format('kocom', 'wallpad', sub, dev),
             'device': {
                 'name': 'kocom_wallpad',
-                'ids': 'kocom_smart_wallpad',
+                'identifiers': ['kocom_smart_wallpad'],
                 'mf': 'KOCOM',
                 'mdl': '스마트 월패드',
                 'sw': SW_VERSION
@@ -606,7 +606,7 @@ def publish_discovery(dev, sub=''):
             'unique_id': '{}_{}_{}_{}'.format('kocom', 'wallpad', sub, dev),
             'device': {
                 'name': 'kocom_wallpad',
-                'ids': 'kocom_smart_wallpad',
+                'identifiers': ['kocom_smart_wallpad'],
                 'mf': 'KOCOM',
                 'mdl': '스마트 월패드',
                 'sw': SW_VERSION
@@ -631,7 +631,7 @@ def publish_discovery(dev, sub=''):
             'unique_id': '{}_{}_{}_{}'.format('kocom', 'wallpad', sub, dev),
             'device': {
                 'name': 'kocom_wallpad',
-                'ids': 'kocom_smart_wallpad',
+                'identifiers': ['kocom_smart_wallpad'],
                 'mf': 'KOCOM',
                 'mdl': '스마트 월패드',
                 'sw': SW_VERSION
@@ -657,7 +657,7 @@ def publish_discovery(dev, sub=''):
                 'unique_id': '{}_{}_{}_{}{}'.format('kocom', 'wallpad', sub, dev, num),
                 'device': {
                     'name': 'kocom_wallpad',
-                    'ids': 'kocom_smart_wallpad',
+                    'identifiers': ['kocom_smart_wallpad'],
                     'mf': 'KOCOM',
                     'mdl': '스마트 월패드',
                     'sw': SW_VERSION
@@ -693,7 +693,7 @@ def publish_discovery(dev, sub=''):
             'unique_id': '{}_{}_{}_{}'.format('kocom', 'wallpad', sub, 'thermostat'),
             'device': {
                 'name': 'kocom_wallpad',
-                'ids': 'kocom_smart_wallpad',
+                'identifiers': ['kocom_smart_wallpad'],
                 'mf': 'KOCOM',
                 'mdl': '스마트 월패드',
                 'sw': SW_VERSION
@@ -713,7 +713,7 @@ def publish_discovery(dev, sub=''):
             'unique_id': '{}_{}_{}_{}'.format('kocom', 'wallpad', sub, dev),
             'device': {
                 'name': 'kocom_wallpad',
-                'ids': 'kocom_smart_wallpad',
+                'identifiers': ['kocom_smart_wallpad'],
                 'mf': 'KOCOM',
                 'mdl': '스마트 월패드',
                 'sw': SW_VERSION
