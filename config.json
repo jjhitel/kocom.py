@@ -1,8 +1,8 @@
 {
-  "name": "Kocom Wallpad with RS485",
+  "name": "Kocom Wallpad Light",
   "version": "2025.04.14-2",
-  "slug": "kocom_py",
-  "description": "Kocom Wallpad for Home Assistant",
+  "slug": "kocom_light_py",
+  "description": "Kocom Wallpad Light for Home Assistant",
   "arch": [
     "armhf",
     "armv7",
@@ -10,7 +10,7 @@
     "amd64",
     "i386"
   ],
-  "url": "https://github.com/jjhitel/kocom.py",
+  "url": "https://github.com/jjhitel/kocom_light.py",
   "startup": "application",
   "boot": "auto",
   "uart": true,
@@ -18,11 +18,11 @@
     "share:rw"
   ],
   "options": {
-    "share/kocom/kocom.conf 설정파일": true,
-    "share/kocom/kocom.py 실행파일": true
+    "share/kocom/kocom_light.conf 설정파일": true,
+    "share/kocom/kocom_light.py 실행파일": true
   },
   "schema": {
-    "share/kocom/kocom.conf 설정파일": "bool",
-    "share/kocom/kocom.py 실행파일": "bool"
+    "share/kocom/kocom_light.conf 설정파일": "bool",
+    "share/kocom/kocom_light.py 실행파일": "bool"
   }
 }

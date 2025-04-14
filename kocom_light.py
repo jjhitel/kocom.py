@@ -24,7 +24,7 @@ import configparser
 
 # define -------------------------------
 SW_VERSION = '2025.04.14-2'
-CONFIG_FILE = 'kocom.conf'
+CONFIG_FILE = 'kocom_light.conf'
 BUF_SIZE = 100
 
 read_write_gap = 0.03  # minimal time interval between last read to write
@@ -37,7 +37,7 @@ chksum_position = 18  # 18th byte
 
 type_t_dic = {'30b':'send', '30d':'ack'}
 seq_t_dic = {'c':1, 'd':2, 'e':3, 'f':4}
-device_t_dic = {'01':'wallpad', '0e':'light', '2c':'gas', '36':'thermo', '3b': 'plug', '44':'elevator', '48':'fan'}
+device_t_dic = {'01':'wallpad', '0e':'light'}
 cmd_t_dic = {'00':'state', '01':'on', '02':'off', '3a':'query'}
 room_t_dic = {'00':'livingroom', '01':'bedroom', '02':'room1', '03':'room2', '04':'kitchen'}
 
@@ -283,27 +283,11 @@ def parse(hex_data):
     return ret
 
 
-def thermo_parse(value):
-    ret = { 'heat_mode': 'heat' if value[:2] == '11' else 'off',
-            'away': 'true' if value[2:4] == '01' else 'false',
-            'set_temp': int(value[4:6], 16) if value[:2] == '11' else int(config.get('User', 'init_temp')),
-            'cur_temp': int(value[8:10], 16)}
-    return ret
-
-
 def light_parse(value):
     ret = {}
     for i in range(1, int(config.get('User', 'light_count'))+1):
         ret['light_'+str(i)] = 'off' if value[i*2-2:i*2] == '00' else 'on'
     return ret
-
-
-def fan_parse(value):
-    preset_dic = {'40':'Low', '80':'Medium', 'c0':'High'}
-    state = 'off' if value[:2] == '10' else 'on'
-#    state = 'off' if value[:2] == '00' else 'on'
-    preset = 'Off' if state == 'off' else preset_dic.get(value[4:6])
-    return { 'state': state, 'preset': preset}
 
 
 # query device --------------------------
@@ -345,54 +329,6 @@ def send_wait_response(dest, src=device_h_dic['wallpad']+'00', cmd=cmd_h_dic['st
     return ret
 
 
-#===== elevator call via TCP/IP =====
-
-def call_elevator_tcpip():
-    import socket
-    sock = socket.socket()
-    sock.settimeout(10)
-
-    APT_SERVER = config.get('Elevator', 'tcpip_apt_server')
-    APT_PORT = int(config.get('Elevator', 'tcpip_apt_port'))
-
-    try:
-        sock.connect((APT_SERVER, APT_PORT))
-    except Exception as e:
-        logging.error('Apartment server socket connection failure : {} | server {}, port {}'.format(e, APT_SERVER, APT_PORT))
-        return False
-    logging.info('Apartment server socket connected | server {}, port {}'.format(APT_SERVER, APT_PORT))
-
-    try:
-        sock.send(bytearray.fromhex(config.get('Elevator', 'tcpip_packet1')))
-        rcv = sock.recv(512)
-        logging.info('recv from apt server: '+''.join("%02x" % i for i in rcv) )
-        time.sleep(0.1)
-        sock.send(bytearray.fromhex(config.get('Elevator', 'tcpip_packet2')))
-        rcv = sock.recv(512)
-        logging.info('recv from apt server: '+''.join("%02x" % i for i in rcv) )
-        sock.send(bytearray.fromhex(config.get('Elevator', 'tcpip_packet3')))
-        for itr in range(100):
-            rcv = sock.recv(512)
-            if len(rcv) == 0:
-                logging.info('apt server connection closed by peer')
-                sock.close()
-                return True
-            rcv_hex = ''.join("%02x" % i for i in rcv)
-            logging.info('recv from apt server: '+rcv_hex )
-            if rcv_hex == config.get('Elevator', 'tcpip_packet4'):
-                logging.info('elevator arrived. sending last heartbeat' )
-                break
-        sock.send(bytearray.fromhex(config.get('Elevator', 'tcpip_packet2')))
-        rcv = sock.recv(512)
-        logging.info('recv from apt server: '+''.join("%02x" % i for i in rcv) )
-        sock.close()
-    except Exception as e:
-        logging.error('Apartment server socket communication failure : {}'.format(e))
-        return False
-
-    return True
-
-
 #===== parse MQTT --> send hex packet =====
 
 def mqtt_on_message(mqttc, obj, msg):
@@ -405,28 +341,8 @@ def mqtt_on_message(mqttc, obj, msg):
 
     logging.info("[MQTT RECV] " + msg.topic + " " + str(msg.qos) + " " + str(msg.payload))
 
-    # thermo heat/off : kocom/room/thermo/3/heat_mode/command
-    if 'thermo' in topic_d and 'heat_mode' in topic_d:
-#        heatmode_dic = {'heat': '11', 'off': '01'}
-        heatmode_dic = {'heat': '11', 'off': '00'}
-
-        dev_id = device_h_dic['thermo']+'{0:02x}'.format(int(topic_d[3]))
-        q = query(dev_id)
-        #settemp_hex = q['value'][4:6] if q['flag']!=False else '14'
-        settemp_hex = '{0:02x}'.format(int(config.get('User', 'init_temp'))) if q['flag']!=False else '14'
-        value = heatmode_dic.get(command) + '00' + settemp_hex + '0000000000'
-        send_wait_response(dest=dev_id, value=value, log='thermo heatmode')
-
-    # thermo set temp : kocom/room/thermo/3/set_temp/command
-    elif 'thermo' in topic_d and 'set_temp' in topic_d:
-        dev_id = device_h_dic['thermo']+'{0:02x}'.format(int(topic_d[3]))
-        settemp_hex = '{0:02x}'.format(int(float(command)))
-
-        value = '1100' + settemp_hex + '0000000000'
-        send_wait_response(dest=dev_id, value=value, log='thermo settemp')
-
     # light on/off : kocom/livingroom/light/1/command
-    elif 'light' in topic_d:
+    if 'light' in topic_d:
         dev_id = device_h_dic['light'] + room_h_dic.get(topic_d[1])
         value = query(dev_id)['value']
         onoff_hex = 'ff' if command == 'on' else '00'
@@ -442,64 +358,6 @@ def mqtt_on_message(mqttc, obj, msg):
         else:
             send_wait_response(dest=dev_id, value=value, log='light')
 
-    # gas off : kocom/livingroom/gas/command
-    elif 'gas' in topic_d:
-        dev_id = device_h_dic['gas'] + room_h_dic.get(topic_d[1])
-        if command == 'off':
-            send_wait_response(dest=dev_id, cmd=cmd_h_dic.get(command), log='gas')
-        else:
-            logging.info('You can only turn off gas.')
-
-    # elevator on/off : kocom/myhome/elevator/command
-    elif 'elevator' in topic_d:
-        dev_id = device_h_dic['elevator'] + room_h_dic.get(topic_d[1])
-        state_on = json.dumps({'state': 'on'})
-        state_off = json.dumps({'state': 'off'})
-        if command == 'on':
-            ret_elevator = None
-            if config.get('Elevator', 'type', fallback='rs485') == 'rs485':
-                ret_elevator = send(dest=device_h_dic['wallpad']+'00', src=dev_id, cmd=cmd_h_dic['on'], value='0'*16, log='elevator', check_ack=False)
-            elif config.get('Elevator', 'type', fallback='rs485') == 'tcpip':
-                ret_elevator = call_elevator_tcpip()
-
-            if ret_elevator == False:
-                logging.debug('elevator send failed')
-                return
-
-            threading.Thread(target=mqttc.publish, args=("kocom/myhome/elevator/state", state_on)).start()
-            if config.get('Elevator', 'rs485_floor', fallback=None) == None:
-                threading.Timer(5, mqttc.publish, args=("kocom/myhome/elevator/state", state_off)).start()
-
-        elif command == 'off':
-            threading.Thread(target=mqttc.publish, args=("kocom/myhome/elevator/state", state_off)).start()
-
-    # kocom/livingroom/fan/set_preset_mode/command
-    elif 'fan' in topic_d and 'set_preset_mode' in topic_d:
-        dev_id = device_h_dic['fan'] + room_h_dic.get(topic_d[1])
-        onoff_dic = {'off':'1000', 'on':'1100'}  #onoff_dic = {'off':'0000', 'on':'1101'}
-        speed_dic = {'Off':'00', 'Low':'40', 'Medium':'80', 'High':'c0'}
-        if command == 'Off':
-            onoff = onoff_dic['off']
-        elif command in speed_dic.keys(): # fan on with specified speed
-            onoff = onoff_dic['on']
-
-        speed = speed_dic.get(command)
-        value = onoff + speed + '0'*10
-        send_wait_response(dest=dev_id, value=value, log='fan')
-
-    # kocom/livingroom/fan/command
-    elif 'fan' in topic_d:
-        dev_id = device_h_dic['fan'] + room_h_dic.get(topic_d[1])
-        onoff_dic = {'off':'1000', 'on':'1100'}  #onoff_dic = {'off':'0000', 'on':'1101'}
-        speed_dic = {'Low':'40', 'Medium':'80', 'High':'c0'}
-        init_fan_mode = config.get('User', 'init_fan_mode')
-        if command in onoff_dic.keys(): # fan on off with previous speed
-            onoff = onoff_dic.get(command)
-            speed = speed_dic.get(init_fan_mode)  #value = query(dev_id)['value']  #speed = value[4:6]
-
-        value = onoff + speed + '0'*10
-        send_wait_response(dest=dev_id, value=value, log='fan')
-
     # kocom/myhome/query/command
     elif 'query' in topic_d:
         if command == 'PRESS':
@@ -514,34 +372,10 @@ def publish_status(p):
 def packet_processor(p):
     logtxt = ""
     if p['type'] == 'send' and p['dest'] == 'wallpad':  # response packet to wallpad
-        if p['src'] == 'thermo' and p['cmd'] == 'state':
-            state = thermo_parse(p['value'])
-            logtxt='[MQTT publish|thermo] id[{}] data[{}]'.format(p['src_subid'], state)
-            mqttc.publish("kocom/room/thermo/" + p['src_subid'] + "/state", json.dumps(state))
-        elif p['src'] == 'light' and p['cmd'] == 'state':
+        if p['src'] == 'light' and p['cmd'] == 'state':
             state = light_parse(p['value'])
             logtxt='[MQTT publish|light] room[{}] data[{}]'.format(p['src_room'], state)
             mqttc.publish("kocom/{}/light/state".format(p['src_room']), json.dumps(state))
-        elif p['src'] == 'fan' and p['cmd'] == 'state':
-            state = fan_parse(p['value'])
-            logtxt='[MQTT publish|fan] data[{}]'.format(state)
-            mqttc.publish("kocom/livingroom/fan/state", json.dumps(state))
-        elif p['src'] == 'gas':
-            state = {'state': p['cmd']}
-            logtxt='[MQTT publish|gas] data[{}]'.format(state)
-            mqttc.publish("kocom/livingroom/gas/state", json.dumps(state))
-    elif p['type'] == 'send' and p['dest'] == 'elevator':
-        floor = int(p['value'][2:4],16)
-        rs485_floor = int(config.get('Elevator','rs485_floor', fallback=0))
-        if rs485_floor != 0 :
-            state = {'floor': floor}
-            if rs485_floor == floor:
-                state['state'] = 'off'
-        else:
-            state = {'state': 'off'}
-        logtxt='[MQTT publish|elevator] data[{}]'.format(state)
-        mqttc.publish("kocom/myhome/elevator/state", json.dumps(state))
-        # aa5530bc0044000100010300000000000000350d0d
 
     if logtxt != "" and config.get('Log', 'show_mqtt_publish') == 'True':
         logging.info(logtxt)
@@ -562,86 +396,7 @@ def discovery():
 #https://www.home-assistant.io/docs/mqtt/discovery/
 #<discovery_prefix>/<component>/<object_id>/config
 def publish_discovery(dev, sub=''):
-    if dev == 'fan':
-        topic = 'homeassistant/fan/kocom_wallpad_fan/config'
-        payload = {
-            'name': 'Kocom Wallpad Fan',
-            'cmd_t': 'kocom/livingroom/fan/command',
-            'stat_t': 'kocom/livingroom/fan/state',
-            'stat_val_tpl': '{{ value_json.state }}',
-            'pr_mode_stat_t': 'kocom/livingroom/fan/state',
-            'pr_mode_val_tpl': '{{ value_json.preset }}',
-            'pr_mode_cmd_t': 'kocom/livingroom/fan/set_preset_mode/command',
-            'pr_mode_cmd_tpl': '{{ value }}',
-            'pr_modes': ['Off', 'Low', 'Medium', 'High'],
-            'pl_on': 'on',
-            'pl_off': 'off',
-            'qos': 0,
-            'object_id': '{}_{}_{}_{}'.format('kocom', 'wallpad', sub, dev),
-            'unique_id': '{}_{}_{}_{}'.format('kocom', 'wallpad', sub, dev),
-            'device': {
-                'name': 'kocom_wallpad',
-                'identifiers': ['kocom_smart_wallpad'],
-                'mf': 'KOCOM',
-                'mdl': '스마트 월패드',
-                'sw': SW_VERSION
-            }
-        }
-        logtxt='[MQTT Discovery|{}] data[{}]'.format(dev, topic)
-        mqttc.publish(topic, json.dumps(payload))
-        if logtxt != "" and config.get('Log', 'show_mqtt_publish') == 'True':
-            logging.info(logtxt)
-    elif dev == 'gas':
-        topic = 'homeassistant/switch/kocom_wallpad_gas/config'
-        payload = {
-            'name': 'Kocom Wallpad Gas',
-            'cmd_t': 'kocom/livingroom/gas/command',
-            'stat_t': 'kocom/livingroom/gas/state',
-            'val_tpl': '{{ value_json.state }}',
-            'pl_on': 'on',
-            'pl_off': 'off',
-            'ic': 'mdi:gas-cylinder',
-            'qos': 0,
-            'object_id': '{}_{}_{}_{}'.format('kocom', 'wallpad', sub, dev),
-            'unique_id': '{}_{}_{}_{}'.format('kocom', 'wallpad', sub, dev),
-            'device': {
-                'name': 'kocom_wallpad',
-                'identifiers': ['kocom_smart_wallpad'],
-                'mf': 'KOCOM',
-                'mdl': '스마트 월패드',
-                'sw': SW_VERSION
-            }
-        }
-        logtxt='[MQTT Discovery|{}] data[{}]'.format(dev, topic)
-        mqttc.publish(topic, json.dumps(payload))
-        if logtxt != "" and config.get('Log', 'show_mqtt_publish') == 'True':
-            logging.info(logtxt)
-    elif dev == 'elevator':
-        topic = 'homeassistant/switch/kocom_wallpad_elevator/config'
-        payload = {
-            'name': 'Kocom Wallpad Elevator',
-            'cmd_t': "kocom/myhome/elevator/command",
-            'stat_t': "kocom/myhome/elevator/state",
-            'val_tpl': "{{ value_json.state }}",
-            'pl_on': 'on',
-            'pl_off': 'off',
-            'ic': 'mdi:elevator',
-            'qos': 0,
-            'object_id': '{}_{}_{}_{}'.format('kocom', 'wallpad', sub, dev),
-            'unique_id': '{}_{}_{}_{}'.format('kocom', 'wallpad', sub, dev),
-            'device': {
-                'name': 'kocom_wallpad',
-                'identifiers': ['kocom_smart_wallpad'],
-                'mf': 'KOCOM',
-                'mdl': '스마트 월패드',
-                'sw': SW_VERSION
-            }
-        }
-        logtxt='[MQTT Discovery|{}] data[{}]'.format(dev, topic)
-        mqttc.publish(topic, json.dumps(payload))
-        if logtxt != "" and config.get('Log', 'show_mqtt_publish') == 'True':
-            logging.info(logtxt)
-    elif dev == 'light':
+    if dev == 'light':
         for num in range(1, int(config.get('User', 'light_count'))+1):
             #ha_topic = 'homeassistant/light/kocom_livingroom_light1/config'
             topic = 'homeassistant/light/kocom_{}_light{}/config'.format(sub, num)
@@ -667,42 +422,6 @@ def publish_discovery(dev, sub=''):
             mqttc.publish(topic, json.dumps(payload))
             if logtxt != "" and config.get('Log', 'show_mqtt_publish') == 'True':
                 logging.info(logtxt)
-    elif dev == 'thermo':
-        num = int(room_h_dic.get(sub))
-        #ha_topic = 'homeassistant/climate/kocom_livingroom_thermostat/config'
-        topic = 'homeassistant/climate/kocom_{}_thermostat/config'.format(sub)
-        payload = {
-            'name': 'Kocom {} Thermostat'.format(sub),
-            'object_id': '{}_{}_{}_{}{}'.format('kocom', 'wallpad', sub, dev, num),
-            'mode_cmd_t': 'kocom/room/thermo/{}/heat_mode/command'.format(num),
-            'mode_stat_t': 'kocom/room/thermo/{}/state'.format(num),
-            'mode_stat_tpl': '{{ value_json.heat_mode }}',
-
-            'temp_cmd_t': 'kocom/room/thermo/{}/set_temp/command'.format(num),
-            'temp_stat_t': 'kocom/room/thermo/{}/state'.format(num),
-            'temp_stat_tpl': '{{ value_json.set_temp }}',
-
-            'curr_temp_t': 'kocom/room/thermo/{}/state'.format(num),
-            'curr_temp_tpl': '{{ value_json.cur_temp }}',
-            'modes': ['off', 'heat'],
-            'min_temp': 10,
-            'max_temp': 30,
-            'ret': 'false',
-            'qos': 0,
-            'object_id': '{}_{}_{}_{}'.format('kocom', 'wallpad', sub, 'thermostat'),
-            'unique_id': '{}_{}_{}_{}'.format('kocom', 'wallpad', sub, 'thermostat'),
-            'device': {
-                'name': 'kocom_wallpad',
-                'identifiers': ['kocom_smart_wallpad'],
-                'mf': 'KOCOM',
-                'mdl': '스마트 월패드',
-                'sw': SW_VERSION
-            }
-        }
-        logtxt='[MQTT Discovery|{}{}] data[{}]'.format(dev, num, topic)
-        mqttc.publish(topic, json.dumps(payload))
-        if logtxt != "" and config.get('Log', 'show_mqtt_publish') == 'True':
-            logging.info(logtxt)
     elif dev == 'query':
         topic = 'homeassistant/button/kocom_wallpad_query/config'
         payload = {
@@ -732,7 +451,7 @@ def poll_state(enforce=False):
     poll_timer.cancel()
 
     dev_list = [x.strip() for x in config.get('Device','enabled').split(',')]
-    no_polling_list = ['wallpad', 'elevator']
+    no_polling_list = ['wallpad']
 
     #thread health check
     for thread_instance in thread_list:
