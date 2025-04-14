@@ -9,6 +9,7 @@ RUN mv /kocom.conf.example /kocom.conf
 # Install requirements for add-on
 RUN python3 -m pip install pyserial
 RUN python3 -m pip install paho-mqtt
+RUN python3 -m pip install typing_extensions
 
 WORKDIR /share
 
