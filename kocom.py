@@ -578,7 +578,7 @@ def publish_discovery(dev, sub=''):
             'pl_off': 'off',
             'qos': 0,
             'object_id': '{}_{}_{}_{}'.format('kocom', 'wallpad', sub, dev),
-            'uniq_id': '{}_{}_{}_{}'.format('kocom', 'wallpad', sub, dev),
+            'unique_id': '{}_{}_{}_{}'.format('kocom', 'wallpad', sub, dev),
             'device': {
                 'name': 'kocom_wallpad',
                 'ids': 'kocom_smart_wallpad',
@@ -603,7 +603,7 @@ def publish_discovery(dev, sub=''):
             'ic': 'mdi:gas-cylinder',
             'qos': 0,
             'object_id': '{}_{}_{}_{}'.format('kocom', 'wallpad', sub, dev),
-            'uniq_id': '{}_{}_{}_{}'.format('kocom', 'wallpad', sub, dev),
+            'unique_id': '{}_{}_{}_{}'.format('kocom', 'wallpad', sub, dev),
             'device': {
                 'name': 'kocom_wallpad',
                 'ids': 'kocom_smart_wallpad',
@@ -628,7 +628,7 @@ def publish_discovery(dev, sub=''):
             'ic': 'mdi:elevator',
             'qos': 0,
             'object_id': '{}_{}_{}_{}'.format('kocom', 'wallpad', sub, dev),
-            'uniq_id': '{}_{}_{}_{}'.format('kocom', 'wallpad', sub, dev),
+            'unique_id': '{}_{}_{}_{}'.format('kocom', 'wallpad', sub, dev),
             'device': {
                 'name': 'kocom_wallpad',
                 'ids': 'kocom_smart_wallpad',
@@ -654,7 +654,7 @@ def publish_discovery(dev, sub=''):
                 'pl_off': 'off',
                 'qos': 0,
                 'object_id': '{}_{}_{}_{}{}'.format('kocom', 'wallpad', sub, dev, num),
-                'uniq_id': '{}_{}_{}_{}{}'.format('kocom', 'wallpad', sub, dev, num),
+                'unique_id': '{}_{}_{}_{}{}'.format('kocom', 'wallpad', sub, dev, num),
                 'device': {
                     'name': 'kocom_wallpad',
                     'ids': 'kocom_smart_wallpad',
@@ -690,7 +690,7 @@ def publish_discovery(dev, sub=''):
             'ret': 'false',
             'qos': 0,
             'object_id': '{}_{}_{}_{}'.format('kocom', 'wallpad', sub, 'thermostat'),
-            'uniq_id': '{}_{}_{}_{}'.format('kocom', 'wallpad', sub, 'thermostat'),
+            'unique_id': '{}_{}_{}_{}'.format('kocom', 'wallpad', sub, 'thermostat'),
             'device': {
                 'name': 'kocom_wallpad',
                 'ids': 'kocom_smart_wallpad',
@@ -710,7 +710,7 @@ def publish_discovery(dev, sub=''):
             'cmd_t': 'kocom/myhome/query/command',
             'qos': 0,
             'object_id': '{}_{}_{}_{}'.format('kocom', 'wallpad', sub, dev),
-            'uniq_id': '{}_{}_{}_{}'.format('kocom', 'wallpad', sub, dev),
+            'unique_id': '{}_{}_{}_{}'.format('kocom', 'wallpad', sub, dev),
             'device': {
                 'name': 'kocom_wallpad',
                 'ids': 'kocom_smart_wallpad',
